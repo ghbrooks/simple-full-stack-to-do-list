@@ -1,5 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ChangeEvent } from "react";
 import axios from "axios";
+import {
+  Button,
+  Paper,
+  TextField,
+  ListItem,
+  List,
+  Checkbox,
+} from "@mui/material";
 
 interface Task {
   id: number;
@@ -13,25 +21,25 @@ axios.defaults.baseURL = "http://localhost:3001";
 
 const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskDescription, setNewTaskDescription] = useState("");
+  const [newTaskTitle, setNewTaskTitle] = useState<string>("");
+  const [newTaskDescription, setNewTaskDescription] = useState<string>("");
 
   useEffect(() => {
     fetchTasks();
   }, []);
 
-  const fetchTasks = async () => {
+  const fetchTasks = async (): Promise<void> => {
     try {
-      const response = await axios.get("/tasks");
+      const response = await axios.get<Task[]>("/tasks");
       setTasks(response.data);
     } catch (error) {
       console.error("Error fetching tasks:", error);
     }
   };
 
-  const addTask = async () => {
+  const addTask = async (): Promise<void> => {
     try {
-      const response = await axios.post("/tasks", {
+      const response = await axios.post<Task>("/tasks", {
         title: newTaskTitle,
         description: newTaskDescription,
       });
@@ -43,9 +51,13 @@ const App: React.FC = () => {
     }
   };
 
-  const editTask = async (id: number, title: string, description?: string) => {
+  const editTask = async (
+    id: number,
+    title: string,
+    description?: string
+  ): Promise<void> => {
     try {
-      const response = await axios.put(`/tasks/${id}`, {
+      const response = await axios.put<Task>(`/tasks/${id}`, {
         title,
         description,
       });
@@ -55,7 +67,7 @@ const App: React.FC = () => {
     }
   };
 
-  const deleteTask = async (id: number) => {
+  const deleteTask = async (id: number): Promise<void> => {
     try {
       await axios.delete(`/tasks/${id}`);
       setTasks(tasks.filter((task) => task.id !== id));
@@ -64,11 +76,11 @@ const App: React.FC = () => {
     }
   };
 
-  const toggleTaskCompletion = async (id: number) => {
+  const toggleTaskCompletion = async (id: number): Promise<void> => {
     try {
       const task = tasks.find((task) => task.id === id);
       if (task) {
-        const response = await axios.put(`/tasks/${id}`, {
+        const response = await axios.put<Task>(`/tasks/${id}`, {
           ...task,
           completed: !task.completed,
         });
@@ -79,48 +91,92 @@ const App: React.FC = () => {
     }
   };
 
+  const handleTitleChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    setNewTaskTitle(e.target.value);
+  };
+
+  const handleDescriptionChange = (e: ChangeEvent<HTMLInputElement>): void => {
+    setNewTaskDescription(e.target.value);
+  };
+
   return (
-    <div>
-      <h1>Task List</h1>
-      <div>
-        <input
-          type="text"
-          placeholder="Task Title"
-          value={newTaskTitle}
-          onChange={(e) => setNewTaskTitle(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Task Description"
-          value={newTaskDescription}
-          onChange={(e) => setNewTaskDescription(e.target.value)}
-        />
-        <button onClick={addTask}>Add Task</button>
-      </div>
-      <ul>
-        {tasks.map((task) => (
-          <li key={task.id}>
-            <input
-              type="checkbox"
-              checked={task.completed}
-              onChange={() => toggleTaskCompletion(task.id)}
-            />
-            <input
-              type="text"
-              value={task.title}
-              onChange={(e) =>
-                editTask(task.id, e.target.value, task.description)
-              }
-            />
-            <input
-              type="text"
-              value={task.description || ""}
-              onChange={(e) => editTask(task.id, task.title, e.target.value)}
-            />
-            <button onClick={() => deleteTask(task.id)}>Delete</button>
-          </li>
-        ))}
-      </ul>
+    <div
+      style={{
+        backgroundImage: `url('./images/basket.jpg')`,
+        backgroundPosition: "center",
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "cover",
+        height: "100vh",
+        width: "100vw",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Paper
+        sx={{
+          minWidth: "800px",
+          width: "50vw",
+          padding: "2rem",
+          textAlign: "center",
+          backgroundColor: "rgba(255, 255, 255, 0.8)",
+        }}
+      >
+        <h1>Task List</h1>
+        <div style={{ marginBottom: "1rem" }}>
+          <TextField
+            label="Task Title"
+            variant="outlined"
+            value={newTaskTitle}
+            onChange={handleTitleChange}
+            sx={{ marginRight: "1rem" }}
+          />
+          <TextField
+            label="Task Description"
+            variant="outlined"
+            value={newTaskDescription}
+            onChange={handleDescriptionChange}
+            sx={{ marginRight: "1rem" }}
+          />
+          <Button variant="contained" color="primary" onClick={addTask}>
+            Add Task
+          </Button>
+        </div>
+        <List>
+          {tasks.map((task) => (
+            <ListItem
+              key={task.id}
+              sx={{ display: "flex", alignItems: "center" }}
+            >
+              <Checkbox
+                checked={task.completed}
+                onChange={() => toggleTaskCompletion(task.id)}
+              />
+              <TextField
+                variant="outlined"
+                value={task.title}
+                onChange={(e) =>
+                  editTask(task.id, e.target.value, task.description)
+                }
+                sx={{ marginRight: "1rem", flexGrow: 1 }}
+              />
+              <TextField
+                variant="outlined"
+                value={task.description || ""}
+                onChange={(e) => editTask(task.id, task.title, e.target.value)}
+                sx={{ marginRight: "1rem", flexGrow: 2 }}
+              />
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={() => deleteTask(task.id)}
+              >
+                Delete
+              </Button>
+            </ListItem>
+          ))}
+        </List>
+      </Paper>
     </div>
   );
 };

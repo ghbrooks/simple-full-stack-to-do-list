@@ -1,5 +1,4 @@
-import express from "express";
-import { Request, Response } from "express";
+import express, { Request, Response } from "express";
 import bodyParser from "body-parser";
 import pino from "express-pino-logger";
 import cors from "cors";

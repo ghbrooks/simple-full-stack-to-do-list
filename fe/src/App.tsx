@@ -7,6 +7,8 @@ import {
   ListItem,
   List,
   Checkbox,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 
 interface Task {
@@ -23,6 +25,7 @@ const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState<string>("");
   const [newTaskDescription, setNewTaskDescription] = useState<string>("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTasks();
@@ -33,6 +36,7 @@ const App: React.FC = () => {
       const response = await axios.get<Task[]>("/tasks");
       setTasks(response.data);
     } catch (error) {
+      setErrorMessage("Error fetching tasks");
       console.error("Error fetching tasks:", error);
     }
   };
@@ -47,6 +51,7 @@ const App: React.FC = () => {
       setNewTaskTitle("");
       setNewTaskDescription("");
     } catch (error) {
+      setErrorMessage("Error adding task");
       console.error("Error adding task:", error);
     }
   };
@@ -63,6 +68,7 @@ const App: React.FC = () => {
       });
       setTasks(tasks.map((task) => (task.id === id ? response.data : task)));
     } catch (error) {
+      setErrorMessage("Error editing task");
       console.error("Error editing task:", error);
     }
   };
@@ -72,6 +78,7 @@ const App: React.FC = () => {
       await axios.delete(`/tasks/${id}`);
       setTasks(tasks.filter((task) => task.id !== id));
     } catch (error) {
+      setErrorMessage("Error deleting task");
       console.error("Error deleting task:", error);
     }
   };
@@ -87,6 +94,7 @@ const App: React.FC = () => {
         setTasks(tasks.map((task) => (task.id === id ? response.data : task)));
       }
     } catch (error) {
+      setErrorMessage("Error toggling task completion");
       console.error("Error toggling task completion:", error);
     }
   };
@@ -97,6 +105,10 @@ const App: React.FC = () => {
 
   const handleDescriptionChange = (e: ChangeEvent<HTMLInputElement>): void => {
     setNewTaskDescription(e.target.value);
+  };
+
+  const handleCloseSnackbar = (): void => {
+    setErrorMessage(null);
   };
 
   return (
@@ -177,6 +189,19 @@ const App: React.FC = () => {
           ))}
         </List>
       </Paper>
+      <Snackbar
+        open={!!errorMessage}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity="error"
+          sx={{ width: "100%" }}
+        >
+          {errorMessage}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };
